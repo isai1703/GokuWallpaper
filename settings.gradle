@@ -1,0 +1,2 @@
+rootProject.name = "GokuWallpaper"
+include ':app'
