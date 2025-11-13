@@ -1,3 +1,5 @@
+import com.oscar.gokuwallpaper.R
+import com.oscar.gokuwallpaper.R
 package com.oscar.gokuwallpaper
 
 import android.content.*
