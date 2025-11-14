@@ -5,6 +5,8 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.view.SurfaceHolder
 import android.graphics.BitmapFactory
+import android.os.Handler
+import android.os.Looper
 
 class GokuWallpaperService : WallpaperService() {
 
@@ -15,6 +17,7 @@ class GokuWallpaperService : WallpaperService() {
     inner class WallpaperEngine : Engine() {
 
         private val paint = Paint()
+        private val handler = Handler(Looper.getMainLooper())
         private val images = listOf(
             R.drawable.fase1,
             R.drawable.fase2,
