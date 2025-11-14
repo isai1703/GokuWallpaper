@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.example.gokuwallpaper'
+    namespace 'com.oscar.gokuwallpaper'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.example.gokuwallpaper"
+        applicationId "com.oscar.gokuwallpaper"
         minSdk 24
         targetSdk 34
         versionCode 1
