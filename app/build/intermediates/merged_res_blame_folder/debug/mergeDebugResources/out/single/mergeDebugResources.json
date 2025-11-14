@@ -1,0 +1,94 @@
+[
+    {
+        "merged": "com.oscar.gokuwallpaper.app-debug-35:/mipmap-anydpi-v26_ic_launcher_round.png.flat",
+        "source": "com.oscar.gokuwallpaper.app-main-37:/mipmap-anydpi-v26/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.oscar.gokuwallpaper.app-debug-35:/drawable_ultrainstinto.png.flat",
+        "source": "com.oscar.gokuwallpaper.app-main-37:/drawable/ultrainstinto.png"
+    },
+    {
+        "merged": "com.oscar.gokuwallpaper.app-debug-35:/mipmap-mdpi_ic_launcher.png.flat",
+        "source": "com.oscar.gokuwallpaper.app-main-37:/mipmap-mdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.oscar.gokuwallpaper.app-debug-35:/layout_activity_main.xml.flat",
+        "source": "com.oscar.gokuwallpaper.app-main-37:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.oscar.gokuwallpaper.app-debug-35:/mipmap-xhdpi_ic_launcher_round.png.flat",
+        "source": "com.oscar.gokuwallpaper.app-main-37:/mipmap-xhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.oscar.gokuwallpaper.app-debug-35:/mipmap-mdpi_ic_launcher_round.png.flat",
+        "source": "com.oscar.gokuwallpaper.app-main-37:/mipmap-mdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.oscar.gokuwallpaper.app-debug-35:/drawable_fase2.png.flat",
+        "source": "com.oscar.gokuwallpaper.app-main-37:/drawable/fase2.png"
+    },
+    {
+        "merged": "com.oscar.gokuwallpaper.app-debug-35:/raw_phase2.mp3.flat",
+        "source": "com.oscar.gokuwallpaper.app-main-37:/raw/phase2.mp3"
+    },
+    {
+        "merged": "com.oscar.gokuwallpaper.app-debug-35:/mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "com.oscar.gokuwallpaper.app-main-37:/mipmap-xxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.oscar.gokuwallpaper.app-debug-35:/mipmap-hdpi_ic_launcher.png.flat",
+        "source": "com.oscar.gokuwallpaper.app-main-37:/mipmap-hdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.oscar.gokuwallpaper.app-debug-35:/drawable_fase1.png.flat",
+        "source": "com.oscar.gokuwallpaper.app-main-37:/drawable/fase1.png"
+    },
+    {
+        "merged": "com.oscar.gokuwallpaper.app-debug-35:/raw_phase3.mp3.flat",
+        "source": "com.oscar.gokuwallpaper.app-main-37:/raw/phase3.mp3"
+    },
+    {
+        "merged": "com.oscar.gokuwallpaper.app-debug-35:/mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "com.oscar.gokuwallpaper.app-main-37:/mipmap-xxxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.oscar.gokuwallpaper.app-debug-35:/mipmap-anydpi-v26_ic_launcher.png.flat",
+        "source": "com.oscar.gokuwallpaper.app-main-37:/mipmap-anydpi-v26/ic_launcher.png"
+    },
+    {
+        "merged": "com.oscar.gokuwallpaper.app-debug-35:/mipmap-xxhdpi_ic_launcher_round.png.flat",
+        "source": "com.oscar.gokuwallpaper.app-main-37:/mipmap-xxhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.oscar.gokuwallpaper.app-debug-35:/raw_phase4.mp3.flat",
+        "source": "com.oscar.gokuwallpaper.app-main-37:/raw/phase4.mp3"
+    },
+    {
+        "merged": "com.oscar.gokuwallpaper.app-debug-35:/mipmap-xxxhdpi_ic_launcher_round.png.flat",
+        "source": "com.oscar.gokuwallpaper.app-main-37:/mipmap-xxxhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.oscar.gokuwallpaper.app-debug-35:/drawable_fase3.png.flat",
+        "source": "com.oscar.gokuwallpaper.app-main-37:/drawable/fase3.png"
+    },
+    {
+        "merged": "com.oscar.gokuwallpaper.app-debug-35:/raw_phase1.mp3.flat",
+        "source": "com.oscar.gokuwallpaper.app-main-37:/raw/phase1.mp3"
+    },
+    {
+        "merged": "com.oscar.gokuwallpaper.app-debug-35:/raw_ultrainstinct.mp3.flat",
+        "source": "com.oscar.gokuwallpaper.app-main-37:/raw/ultrainstinct.mp3"
+    },
+    {
+        "merged": "com.oscar.gokuwallpaper.app-debug-35:/mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "com.oscar.gokuwallpaper.app-main-37:/mipmap-xhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.oscar.gokuwallpaper.app-debug-35:/mipmap-hdpi_ic_launcher_round.png.flat",
+        "source": "com.oscar.gokuwallpaper.app-main-37:/mipmap-hdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.oscar.gokuwallpaper.app-debug-35:/drawable_fase4.png.flat",
+        "source": "com.oscar.gokuwallpaper.app-main-37:/drawable/fase4.png"
+    }
+]

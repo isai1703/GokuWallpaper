@@ -1,0 +1,16 @@
+R_DEF: Internal format may change without notice
+local
+drawable fase1
+drawable fase2
+drawable fase3
+drawable fase4
+drawable ultrainstinto
+layout activity_main
+mipmap ic_launcher
+mipmap ic_launcher_round
+raw phase1
+raw phase2
+raw phase3
+raw phase4
+raw ultrainstinct
+string app_name
