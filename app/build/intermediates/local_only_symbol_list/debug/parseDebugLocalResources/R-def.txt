@@ -14,3 +14,4 @@ raw phase3
 raw phase4
 raw ultrainstinct
 string app_name
+xml wallpaper
