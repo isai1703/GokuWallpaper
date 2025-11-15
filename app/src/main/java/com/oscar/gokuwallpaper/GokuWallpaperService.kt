@@ -6,6 +6,7 @@ import android.graphics.Paint
 import android.view.SurfaceHolder
 import android.graphics.BitmapFactory
 import android.graphics.Bitmap
+import android.graphics.Matrix
 import android.os.Handler
 import android.os.Looper
 import android.content.Intent
@@ -22,7 +23,7 @@ class GokuWallpaperService : WallpaperService() {
 
     inner class WallpaperEngine : Engine() {
 
-        private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        private val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
         private val handler = Handler(Looper.getMainLooper())
         private var running = true
         
@@ -94,13 +95,28 @@ class GokuWallpaperService : WallpaperService() {
                 canvas = holder.lockCanvas()
                 if (canvas != null) {
                     val originalBitmap = BitmapFactory.decodeResource(resources, imageRes)
-                    val scaledBitmap = scaleBitmapToScreen(originalBitmap, canvas.width, canvas.height)
                     
-                    canvas.drawBitmap(scaledBitmap, 0f, 0f, paint)
+                    val canvasWidth = canvas.width.toFloat()
+                    val canvasHeight = canvas.height.toFloat()
+                    val bitmapWidth = originalBitmap.width.toFloat()
+                    val bitmapHeight = originalBitmap.height.toFloat()
                     
-                    if (scaledBitmap != originalBitmap) {
-                        scaledBitmap.recycle()
+                    val scaleX = canvasWidth / bitmapWidth
+                    val scaleY = canvasHeight / bitmapHeight
+                    val scale = maxOf(scaleX, scaleY)
+                    
+                    val scaledWidth = bitmapWidth * scale
+                    val scaledHeight = bitmapHeight * scale
+                    
+                    val left = (canvasWidth - scaledWidth) / 2f
+                    val top = (canvasHeight - scaledHeight) / 2f
+                    
+                    val matrix = Matrix().apply {
+                        postScale(scale, scale)
+                        postTranslate(left, top)
                     }
+                    
+                    canvas.drawBitmap(originalBitmap, matrix, paint)
                     originalBitmap.recycle()
                 }
             } finally {
@@ -108,20 +124,6 @@ class GokuWallpaperService : WallpaperService() {
                     holder.unlockCanvasAndPost(canvas)
                 }
             }
-        }
-
-        private fun scaleBitmapToScreen(bitmap: Bitmap, screenWidth: Int, screenHeight: Int): Bitmap {
-            val bitmapWidth = bitmap.width
-            val bitmapHeight = bitmap.height
-            
-            val scaleWidth = screenWidth.toFloat() / bitmapWidth
-            val scaleHeight = screenHeight.toFloat() / bitmapHeight
-            val scale = maxOf(scaleWidth, scaleHeight)
-            
-            val scaledWidth = (bitmapWidth * scale).toInt()
-            val scaledHeight = (bitmapHeight * scale).toInt()
-            
-            return Bitmap.createScaledBitmap(bitmap, scaledWidth, scaledHeight, true)
         }
     }
 }
