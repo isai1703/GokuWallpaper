@@ -5,7 +5,6 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.view.SurfaceHolder
 import android.graphics.BitmapFactory
-import android.graphics.Bitmap
 import android.graphics.Matrix
 import android.os.Handler
 import android.os.Looper
@@ -15,6 +14,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.os.BatteryManager
 import android.util.Log
+import kotlin.math.sin
 
 class GokuWallpaperService : WallpaperService() {
 
@@ -28,6 +28,8 @@ class GokuWallpaperService : WallpaperService() {
         private val handler = Handler(Looper.getMainLooper())
         private var running = true
         private var currentBatteryLevel = -1
+        private var animationTime = 0f
+        private var currentImageRes = R.drawable.fase1
         
         private val batteryReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
@@ -50,6 +52,7 @@ class GokuWallpaperService : WallpaperService() {
             }
             registerReceiver(batteryReceiver, filter)
             Log.d("GokuWallpaper", "WallpaperEngine created and receiver registered")
+            startAnimation()
         }
 
         override fun onDestroy() {
@@ -67,6 +70,17 @@ class GokuWallpaperService : WallpaperService() {
             running = visible
             if (visible) {
                 updateWallpaperBasedOnBattery()
+                startAnimation()
+            } else {
+                handler.removeCallbacksAndMessages(null)
+            }
+        }
+
+        private fun startAnimation() {
+            if (running) {
+                animationTime += 0.05f
+                drawFrame(currentImageRes)
+                handler.postDelayed({ startAnimation() }, 33)
             }
         }
 
@@ -114,8 +128,8 @@ class GokuWallpaperService : WallpaperService() {
             val batteryLevel = getBatteryLevel()
             val imageRes = getImageForBatteryLevel(batteryLevel)
             val phase = getPhaseForBatteryLevel(batteryLevel)
+            currentImageRes = imageRes
             Log.d("GokuWallpaper", "Updating to Phase $phase (Battery: $batteryLevel%)")
-            drawFrame(imageRes)
         }
 
         private fun drawFrame(imageRes: Int) {
@@ -132,14 +146,18 @@ class GokuWallpaperService : WallpaperService() {
                     val bitmapWidth = originalBitmap.width.toFloat()
                     val bitmapHeight = originalBitmap.height.toFloat()
                     
+                    val oscillation = sin(animationTime) * 10f
+                    val scaleOscillation = 1.0f + sin(animationTime * 0.5f) * 0.02f
+                    
                     val scaleX = canvasWidth / bitmapWidth
                     val scaleY = canvasHeight / bitmapHeight
-                    val scale = maxOf(scaleX, scaleY) * 0.85f
+                    val baseScale = maxOf(scaleX, scaleY) * 0.85f
+                    val scale = baseScale * scaleOscillation
                     
                     val scaledWidth = bitmapWidth * scale
                     val scaledHeight = bitmapHeight * scale
                     
-                    val left = (canvasWidth - scaledWidth) / 2f
+                    val left = (canvasWidth - scaledWidth) / 2f + oscillation
                     val top = (canvasHeight - scaledHeight) / 2f
                     
                     val matrix = Matrix().apply {
