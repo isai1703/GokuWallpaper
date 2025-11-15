@@ -14,6 +14,7 @@ import android.content.IntentFilter
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.os.BatteryManager
+import android.util.Log
 
 class GokuWallpaperService : WallpaperService() {
 
@@ -26,10 +27,17 @@ class GokuWallpaperService : WallpaperService() {
         private val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
         private val handler = Handler(Looper.getMainLooper())
         private var running = true
+        private var currentBatteryLevel = -1
         
         private val batteryReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
-                updateWallpaperBasedOnBattery()
+                val newLevel = getBatteryLevel()
+                Log.d("GokuWallpaper", "Battery level: $newLevel%")
+                
+                if (shouldUpdateWallpaper(newLevel)) {
+                    currentBatteryLevel = newLevel
+                    updateWallpaperBasedOnBattery()
+                }
             }
         }
 
@@ -41,11 +49,16 @@ class GokuWallpaperService : WallpaperService() {
                 addAction(Intent.ACTION_POWER_DISCONNECTED)
             }
             registerReceiver(batteryReceiver, filter)
+            Log.d("GokuWallpaper", "WallpaperEngine created and receiver registered")
         }
 
         override fun onDestroy() {
             super.onDestroy()
-            unregisterReceiver(batteryReceiver)
+            try {
+                unregisterReceiver(batteryReceiver)
+            } catch (e: Exception) {
+                Log.e("GokuWallpaper", "Error unregistering receiver", e)
+            }
             running = false
             handler.removeCallbacksAndMessages(null)
         }
@@ -71,6 +84,22 @@ class GokuWallpaperService : WallpaperService() {
             }
         }
 
+        private fun shouldUpdateWallpaper(newLevel: Int): Boolean {
+            val oldPhase = getPhaseForBatteryLevel(currentBatteryLevel)
+            val newPhase = getPhaseForBatteryLevel(newLevel)
+            return oldPhase != newPhase
+        }
+
+        private fun getPhaseForBatteryLevel(level: Int): Int {
+            return when {
+                level <= 20 -> 1
+                level <= 40 -> 2
+                level <= 60 -> 3
+                level <= 80 -> 4
+                else -> 5
+            }
+        }
+
         private fun getImageForBatteryLevel(level: Int): Int {
             return when {
                 level <= 20 -> R.drawable.fase1
@@ -84,6 +113,8 @@ class GokuWallpaperService : WallpaperService() {
         private fun updateWallpaperBasedOnBattery() {
             val batteryLevel = getBatteryLevel()
             val imageRes = getImageForBatteryLevel(batteryLevel)
+            val phase = getPhaseForBatteryLevel(batteryLevel)
+            Log.d("GokuWallpaper", "Updating to Phase $phase (Battery: $batteryLevel%)")
             drawFrame(imageRes)
         }
 
@@ -103,7 +134,7 @@ class GokuWallpaperService : WallpaperService() {
                     
                     val scaleX = canvasWidth / bitmapWidth
                     val scaleY = canvasHeight / bitmapHeight
-                    val scale = maxOf(scaleX, scaleY)
+                    val scale = maxOf(scaleX, scaleY) * 0.85f
                     
                     val scaledWidth = bitmapWidth * scale
                     val scaledHeight = bitmapHeight * scale
@@ -119,6 +150,8 @@ class GokuWallpaperService : WallpaperService() {
                     canvas.drawBitmap(originalBitmap, matrix, paint)
                     originalBitmap.recycle()
                 }
+            } catch (e: Exception) {
+                Log.e("GokuWallpaper", "Error drawing frame", e)
             } finally {
                 if (canvas != null) {
                     holder.unlockCanvasAndPost(canvas)
