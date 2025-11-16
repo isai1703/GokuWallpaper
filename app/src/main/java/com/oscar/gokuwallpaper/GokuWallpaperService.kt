@@ -7,6 +7,9 @@ import android.view.SurfaceHolder
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.graphics.Color
+import android.graphics.BlurMaskFilter
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
 import android.os.Handler
 import android.os.Looper
 import android.content.Intent
@@ -29,6 +32,7 @@ class GokuWallpaperService : WallpaperService() {
     inner class WallpaperEngine : Engine() {
 
         private val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+        private val auraPaint = Paint(Paint.ANTI_ALIAS_FLAG)
         private val handler = Handler(Looper.getMainLooper())
         private var running = true
         private var currentBatteryLevel = -1
@@ -91,6 +95,11 @@ class GokuWallpaperService : WallpaperService() {
             super.onCreate(surfaceHolder)
             
             Log.d("GokuWallpaper", "WallpaperEngine onCreate")
+            
+            auraPaint.apply {
+                style = Paint.Style.FILL
+                maskFilter = BlurMaskFilter(50f, BlurMaskFilter.Blur.NORMAL)
+            }
             
             val filter = IntentFilter().apply {
                 addAction(Intent.ACTION_BATTERY_CHANGED)
@@ -199,6 +208,17 @@ class GokuWallpaperService : WallpaperService() {
             }
         }
 
+        private fun getAuraColorForPhase(phase: Int): Int {
+            return when (phase) {
+                1 -> Color.argb(180, 255, 215, 0)    // Amarillo dorado
+                2 -> Color.argb(180, 255, 255, 0)    // Amarillo brillante
+                3 -> Color.argb(180, 255, 140, 0)    // Naranja dorado
+                4 -> Color.argb(180, 65, 105, 225)   // Azul royal
+                5 -> Color.argb(180, 200, 200, 255)  // Azul plateado (Ultra Instinto)
+                else -> Color.argb(180, 255, 215, 0)
+            }
+        }
+
         private fun getSoundForBatteryLevel(level: Int): Int {
             return when {
                 level <= 20 -> R.raw.fase1
@@ -299,35 +319,65 @@ class GokuWallpaperService : WallpaperService() {
                     val bitmapWidth = originalBitmap.width.toFloat()
                     val bitmapHeight = originalBitmap.height.toFloat()
                     
-                    val oscillation = sin(animationTime) * 10f
-                    val baseScaleOscillation = 1.0f + sin(animationTime * 0.5f) * 0.02f
-                    
-                    val chargingEffect = if (isCharging && chargingAnimationIntensity > 0) {
-                        val vibration = sin(animationTime * 5f) * 15f * chargingAnimationIntensity
-                        val scaleBoost = abs(sin(animationTime * 3f)) * 0.05f * chargingAnimationIntensity
-                        Pair(vibration, scaleBoost)
-                    } else {
-                        Pair(0f, 0f)
-                    }
-                    
+                    // Goku permanece estático
                     val scaleX = canvasWidth / bitmapWidth
                     val scaleY = canvasHeight / bitmapHeight
-                    val baseScale = maxOf(scaleX, scaleY) * 0.85f
-                    val scale = baseScale * baseScaleOscillation * (1f + chargingEffect.second)
+                    val scale = maxOf(scaleX, scaleY) * 0.85f
                     
                     val scaledWidth = bitmapWidth * scale
                     val scaledHeight = bitmapHeight * scale
                     
-                    val left = (canvasWidth - scaledWidth) / 2f + oscillation + chargingEffect.first
+                    val left = (canvasWidth - scaledWidth) / 2f
                     val top = (canvasHeight - scaledHeight) / 2f
                     
+                    // Dibujar aura animada detrás de Goku
+                    val phase = getPhaseForBatteryLevel(currentBatteryLevel)
+                    val auraColor = getAuraColorForPhase(phase)
+                    
+                    // Aura normal pulsante
+                    val normalAuraPulse = abs(sin(animationTime * 2f))
+                    val normalAuraAlpha = (50 + normalAuraPulse * 100).toInt()
+                    
+                    auraPaint.color = Color.argb(normalAuraAlpha, 
+                        Color.red(auraColor), 
+                        Color.green(auraColor), 
+                        Color.blue(auraColor))
+                    
+                    val auraSize = 1.1f + sin(animationTime * 2f) * 0.05f
+                    val auraLeft = left - (scaledWidth * (auraSize - 1f) / 2f)
+                    val auraTop = top - (scaledHeight * (auraSize - 1f) / 2f)
+                    
+                    canvas.drawCircle(
+                        canvasWidth / 2f,
+                        canvasHeight / 2f,
+                        (scaledWidth.coerceAtLeast(scaledHeight)) * auraSize * 0.4f,
+                        auraPaint
+                    )
+                    
+                    // Efecto de carga intenso cuando está conectado el cargador
                     if (isCharging && chargingAnimationIntensity > 0) {
-                        val glowAlpha = (abs(sin(animationTime * 4f)) * 100 * chargingAnimationIntensity).toInt()
-                        paint.alpha = glowAlpha
+                        val chargingPulse = abs(sin(animationTime * 8f))
+                        val chargingAlpha = (150 * chargingPulse * chargingAnimationIntensity).toInt()
+                        
+                        auraPaint.color = Color.argb(chargingAlpha, 255, 255, 200)
+                        
+                        // Múltiples capas de aura vibrante
+                        for (i in 1..3) {
+                            val layerSize = 1.1f + (sin(animationTime * (4f + i)) * 0.1f * chargingAnimationIntensity)
+                            canvas.drawCircle(
+                                canvasWidth / 2f,
+                                canvasHeight / 2f,
+                                (scaledWidth.coerceAtLeast(scaledHeight)) * layerSize * 0.35f,
+                                auraPaint
+                            )
+                        }
+                        
+                        // Resplandor de pantalla completa
+                        val glowAlpha = (abs(sin(animationTime * 6f)) * 80 * chargingAnimationIntensity).toInt()
                         canvas.drawColor(Color.argb(glowAlpha, 255, 255, 200))
-                        paint.alpha = 255
                     }
                     
+                    // Dibujar Goku (sin movimiento)
                     val matrix = Matrix().apply {
                         postScale(scale, scale)
                         postTranslate(left, top)
