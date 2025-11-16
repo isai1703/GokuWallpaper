@@ -6,6 +6,7 @@ import android.graphics.Paint
 import android.view.SurfaceHolder
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
+import android.graphics.Color
 import android.os.Handler
 import android.os.Looper
 import android.content.Intent
@@ -14,7 +15,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.os.BatteryManager
 import android.util.Log
+import android.media.MediaPlayer
+import android.widget.Toast
 import kotlin.math.sin
+import kotlin.math.abs
 
 class GokuWallpaperService : WallpaperService() {
 
@@ -30,33 +34,91 @@ class GokuWallpaperService : WallpaperService() {
         private var currentBatteryLevel = -1
         private var animationTime = 0f
         private var currentImageRes = R.drawable.fase1
+        private var mediaPlayer: MediaPlayer? = null
+        private var isCharging = false
+        private var chargingAnimationIntensity = 0f
         
         private val batteryReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
-                val newLevel = getBatteryLevel()
-                Log.d("GokuWallpaper", "Battery level: $newLevel%")
+                Log.d("GokuWallpaper", "Broadcast received: ${intent?.action}")
                 
-                if (shouldUpdateWallpaper(newLevel)) {
-                    currentBatteryLevel = newLevel
-                    updateWallpaperBasedOnBattery()
+                when (intent?.action) {
+                    Intent.ACTION_POWER_CONNECTED -> {
+                        Log.d("GokuWallpaper", "POWER CONNECTED!")
+                        handler.post {
+                            Toast.makeText(applicationContext, "Cargando Ki! ⚡", Toast.LENGTH_SHORT).show()
+                        }
+                        isCharging = true
+                        playChargingSound()
+                        startChargingAnimation()
+                    }
+                    Intent.ACTION_POWER_DISCONNECTED -> {
+                        Log.d("GokuWallpaper", "POWER DISCONNECTED!")
+                        handler.post {
+                            Toast.makeText(applicationContext, "Ki estable", Toast.LENGTH_SHORT).show()
+                        }
+                        isCharging = false
+                        chargingAnimationIntensity = 0f
+                    }
+                    Intent.ACTION_BATTERY_CHANGED -> {
+                        val newLevel = getBatteryLevel()
+                        val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+                        val isCurrentlyCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                                                 status == BatteryManager.BATTERY_STATUS_FULL
+                        
+                        if (isCurrentlyCharging != isCharging) {
+                            isCharging = isCurrentlyCharging
+                            if (isCharging) {
+                                playChargingSound()
+                                startChargingAnimation()
+                            } else {
+                                chargingAnimationIntensity = 0f
+                            }
+                        }
+                        
+                        Log.d("GokuWallpaper", "Battery level: $newLevel%, Charging: $isCharging")
+                        
+                        if (shouldUpdateWallpaper(newLevel)) {
+                            currentBatteryLevel = newLevel
+                            updateWallpaperBasedOnBattery()
+                        }
+                    }
                 }
             }
         }
 
         override fun onCreate(surfaceHolder: SurfaceHolder?) {
             super.onCreate(surfaceHolder)
+            
+            Log.d("GokuWallpaper", "WallpaperEngine onCreate")
+            
             val filter = IntentFilter().apply {
                 addAction(Intent.ACTION_BATTERY_CHANGED)
                 addAction(Intent.ACTION_POWER_CONNECTED)
                 addAction(Intent.ACTION_POWER_DISCONNECTED)
             }
-            registerReceiver(batteryReceiver, filter)
-            Log.d("GokuWallpaper", "WallpaperEngine created and receiver registered")
+            
+            try {
+                registerReceiver(batteryReceiver, filter)
+                Log.d("GokuWallpaper", "Receiver registered successfully")
+            } catch (e: Exception) {
+                Log.e("GokuWallpaper", "Error registering receiver", e)
+            }
+            
+            val batteryLevel = getBatteryLevel()
+            currentBatteryLevel = batteryLevel
+            currentImageRes = getImageForBatteryLevel(batteryLevel)
+            
+            handler.post {
+                Toast.makeText(applicationContext, "Goku Wallpaper activo! Batería: $batteryLevel%", Toast.LENGTH_SHORT).show()
+            }
+            
             startAnimation()
         }
 
         override fun onDestroy() {
             super.onDestroy()
+            Log.d("GokuWallpaper", "WallpaperEngine onDestroy")
             try {
                 unregisterReceiver(batteryReceiver)
             } catch (e: Exception) {
@@ -64,24 +126,37 @@ class GokuWallpaperService : WallpaperService() {
             }
             running = false
             handler.removeCallbacksAndMessages(null)
+            releaseMediaPlayer()
         }
 
         override fun onVisibilityChanged(visible: Boolean) {
+            Log.d("GokuWallpaper", "Visibility changed: $visible")
             running = visible
             if (visible) {
-                updateWallpaperBasedOnBattery()
                 startAnimation()
             } else {
                 handler.removeCallbacksAndMessages(null)
+                releaseMediaPlayer()
             }
         }
 
         private fun startAnimation() {
             if (running) {
                 animationTime += 0.05f
+                
+                if (isCharging && chargingAnimationIntensity < 1f) {
+                    chargingAnimationIntensity += 0.02f
+                } else if (!isCharging && chargingAnimationIntensity > 0f) {
+                    chargingAnimationIntensity -= 0.05f
+                }
+                
                 drawFrame(currentImageRes)
                 handler.postDelayed({ startAnimation() }, 33)
             }
+        }
+
+        private fun startChargingAnimation() {
+            chargingAnimationIntensity = 0f
         }
 
         private fun getBatteryLevel(): Int {
@@ -124,12 +199,90 @@ class GokuWallpaperService : WallpaperService() {
             }
         }
 
+        private fun getSoundForBatteryLevel(level: Int): Int {
+            return when {
+                level <= 20 -> R.raw.fase1
+                level <= 40 -> R.raw.fase2
+                level <= 60 -> R.raw.fase3
+                level <= 80 -> R.raw.fase4
+                else -> R.raw.ultrainstinto
+            }
+        }
+
         private fun updateWallpaperBasedOnBattery() {
             val batteryLevel = getBatteryLevel()
             val imageRes = getImageForBatteryLevel(batteryLevel)
+            val soundRes = getSoundForBatteryLevel(batteryLevel)
             val phase = getPhaseForBatteryLevel(batteryLevel)
             currentImageRes = imageRes
+            
+            handler.post {
+                Toast.makeText(applicationContext, "Fase $phase activada! ⚡", Toast.LENGTH_SHORT).show()
+            }
+            
+            playPhaseSound(soundRes)
             Log.d("GokuWallpaper", "Updating to Phase $phase (Battery: $batteryLevel%)")
+        }
+
+        private fun playPhaseSound(soundRes: Int) {
+            try {
+                releaseMediaPlayer()
+                Log.d("GokuWallpaper", "Attempting to play phase sound: $soundRes")
+                mediaPlayer = MediaPlayer.create(applicationContext, soundRes)
+                
+                if (mediaPlayer != null) {
+                    mediaPlayer?.setVolume(1.0f, 1.0f)
+                    mediaPlayer?.setOnCompletionListener {
+                        Log.d("GokuWallpaper", "Phase sound completed")
+                        releaseMediaPlayer()
+                    }
+                    mediaPlayer?.setOnErrorListener { mp, what, extra ->
+                        Log.e("GokuWallpaper", "MediaPlayer error: what=$what, extra=$extra")
+                        false
+                    }
+                    mediaPlayer?.start()
+                    Log.d("GokuWallpaper", "Phase sound started")
+                } else {
+                    Log.e("GokuWallpaper", "MediaPlayer is null")
+                }
+            } catch (e: Exception) {
+                Log.e("GokuWallpaper", "Error playing phase sound", e)
+            }
+        }
+
+        private fun playChargingSound() {
+            try {
+                releaseMediaPlayer()
+                Log.d("GokuWallpaper", "Attempting to play charging sound")
+                mediaPlayer = MediaPlayer.create(applicationContext, R.raw.charging)
+                
+                if (mediaPlayer != null) {
+                    mediaPlayer?.setVolume(1.0f, 1.0f)
+                    mediaPlayer?.setOnCompletionListener {
+                        Log.d("GokuWallpaper", "Charging sound completed")
+                        releaseMediaPlayer()
+                    }
+                    mediaPlayer?.setOnErrorListener { mp, what, extra ->
+                        Log.e("GokuWallpaper", "MediaPlayer error: what=$what, extra=$extra")
+                        false
+                    }
+                    mediaPlayer?.start()
+                    Log.d("GokuWallpaper", "Charging sound started")
+                } else {
+                    Log.e("GokuWallpaper", "MediaPlayer is null for charging sound")
+                }
+            } catch (e: Exception) {
+                Log.e("GokuWallpaper", "Error playing charging sound", e)
+            }
+        }
+
+        private fun releaseMediaPlayer() {
+            try {
+                mediaPlayer?.release()
+                mediaPlayer = null
+            } catch (e: Exception) {
+                Log.e("GokuWallpaper", "Error releasing media player", e)
+            }
         }
 
         private fun drawFrame(imageRes: Int) {
@@ -147,18 +300,33 @@ class GokuWallpaperService : WallpaperService() {
                     val bitmapHeight = originalBitmap.height.toFloat()
                     
                     val oscillation = sin(animationTime) * 10f
-                    val scaleOscillation = 1.0f + sin(animationTime * 0.5f) * 0.02f
+                    val baseScaleOscillation = 1.0f + sin(animationTime * 0.5f) * 0.02f
+                    
+                    val chargingEffect = if (isCharging && chargingAnimationIntensity > 0) {
+                        val vibration = sin(animationTime * 5f) * 15f * chargingAnimationIntensity
+                        val scaleBoost = abs(sin(animationTime * 3f)) * 0.05f * chargingAnimationIntensity
+                        Pair(vibration, scaleBoost)
+                    } else {
+                        Pair(0f, 0f)
+                    }
                     
                     val scaleX = canvasWidth / bitmapWidth
                     val scaleY = canvasHeight / bitmapHeight
                     val baseScale = maxOf(scaleX, scaleY) * 0.85f
-                    val scale = baseScale * scaleOscillation
+                    val scale = baseScale * baseScaleOscillation * (1f + chargingEffect.second)
                     
                     val scaledWidth = bitmapWidth * scale
                     val scaledHeight = bitmapHeight * scale
                     
-                    val left = (canvasWidth - scaledWidth) / 2f + oscillation
+                    val left = (canvasWidth - scaledWidth) / 2f + oscillation + chargingEffect.first
                     val top = (canvasHeight - scaledHeight) / 2f
+                    
+                    if (isCharging && chargingAnimationIntensity > 0) {
+                        val glowAlpha = (abs(sin(animationTime * 4f)) * 100 * chargingAnimationIntensity).toInt()
+                        paint.alpha = glowAlpha
+                        canvas.drawColor(Color.argb(glowAlpha, 255, 255, 200))
+                        paint.alpha = 255
+                    }
                     
                     val matrix = Matrix().apply {
                         postScale(scale, scale)
